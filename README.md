@@ -1,4 +1,3 @@
-<img src="/src/assets/logo.png" alt="CultureSync Live" width="200"/>
 
 # Harmonia
 
