@@ -8,6 +8,7 @@ import { AssistantView } from '../views/AssistantView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AdvancedView } from '../views/AdvancedView.js';
 import { CulturalCoachingView } from '../views/CulturalCoachingView.js';
+import { CultureSyncDemoView } from '../views/CultureSyncDemoView.js';
 
 export class HarmoniaApp extends LitElement {
     static styles = css`
@@ -267,8 +268,13 @@ export class HarmoniaApp extends LitElement {
         this.requestUpdate();
     }
 
+    handleDemoClick() {
+        this.currentView = 'demo';
+        this.requestUpdate();
+    }
+
     async handleClose() {
-        if (this.currentView === 'customize' || this.currentView === 'help' || this.currentView === 'history') {
+        if (this.currentView === 'customize' || this.currentView === 'help' || this.currentView === 'history' || this.currentView === 'demo') {
             this.currentView = 'main';
         } else if (this.currentView === 'assistant') {
             cheddar.stopCapture();
@@ -481,6 +487,9 @@ export class HarmoniaApp extends LitElement {
             case 'advanced':
                 return html` <advanced-view></advanced-view> `;
 
+            case 'demo':
+                return html` <culture-sync-demo-view></culture-sync-demo-view> `;
+
             case 'assistant':
                 // Check if this is a cultural profile
                 const isCulturalProfile = ['business_negotiation', 'multicultural_team', 'international_sales', 'client_relationship'].includes(this.selectedProfile);
@@ -533,6 +542,7 @@ export class HarmoniaApp extends LitElement {
                         .onCustomizeClick=${() => this.handleCustomizeClick()}
                         .onHelpClick=${() => this.handleHelpClick()}
                         .onHistoryClick=${() => this.handleHistoryClick()}
+                        .onDemoClick=${() => this.handleDemoClick()}
                         .onAdvancedClick=${() => this.handleAdvancedClick()}
                         .onCloseClick=${() => this.handleClose()}
                         .onBackClick=${() => this.handleBackClick()}
