@@ -419,7 +419,7 @@ export class CustomizeView extends LitElement {
 
     constructor() {
         super();
-        this.selectedProfile = 'interview';
+        this.selectedProfile = 'sales';
         this.selectedLanguage = 'en-US';
         this.selectedScreenshotInterval = '5';
         this.selectedImageQuality = 'medium';
@@ -481,11 +481,7 @@ export class CustomizeView extends LitElement {
                 name: '🤝 Client Relationship',
                 description: 'Cultural intelligence for client relationship building',
             },
-            {
-                value: 'interview',
-                name: 'Job Interview',
-                description: 'Get help with answering interview questions',
-            },
+            
             {
                 value: 'sales',
                 name: 'Sales Call',
@@ -505,12 +501,7 @@ export class CustomizeView extends LitElement {
                 value: 'negotiation',
                 name: 'Negotiation',
                 description: 'Guidance for business negotiations and deals',
-            },
-            {
-                value: 'exam',
-                name: 'Exam Assistant',
-                description: 'Academic assistance for test-taking and exam questions',
-            },
+            }
         ];
     }
 
@@ -554,13 +545,11 @@ export class CustomizeView extends LitElement {
             business_negotiation: '🌍 Business Negotiation',
             multicultural_team: '👥 Multicultural Team',
             international_sales: '💼 International Sales',
-            client_relationship: '🤝 Client Relationship',
-            interview: 'Job Interview',
+            client_relationship: '🤝 Client Relationship',            
             sales: 'Sales Call',
             meeting: 'Business Meeting',
             presentation: 'Presentation',
-            negotiation: 'Negotiation',
-            exam: 'Exam Assistant',
+            negotiation: 'Negotiation'
         };
     }
 

@@ -304,7 +304,7 @@ export class AssistantView extends LitElement {
         super();
         this.responses = [];
         this.currentResponseIndex = -1;
-        this.selectedProfile = 'interview';
+        this.selectedProfile = 'sales';
         this.onSendText = () => {};
         this._lastAnimatedWordCount = 0;
         // Load saved responses from localStorage
@@ -316,13 +316,11 @@ export class AssistantView extends LitElement {
     }
 
     getProfileNames() {
-        return {
-            interview: 'Job Interview',
+        return {            
             sales: 'Sales Call',
             meeting: 'Business Meeting',
             presentation: 'Presentation',
-            negotiation: 'Negotiation',
-            exam: 'Exam Assistant',
+            negotiation: 'Negotiation'            
         };
     }
 

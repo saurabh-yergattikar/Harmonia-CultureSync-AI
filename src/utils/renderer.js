@@ -52,7 +52,7 @@ let tokenTracker = {
         this.cleanOldTokens();
     },
 
-    // Calculate image tokens based on Gemini 2.0 rules
+    // Calculate image tokens based on OpenAI rules
     calculateImageTokens(width, height) {
         // Images ≤384px in both dimensions = 258 tokens
         if (width <= 384 && height <= 384) {
@@ -149,10 +149,19 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
-async function initializeGemini(profile = 'interview', language = 'en-US') {
+async function initializeOpenAI(profile = 'sales', language = 'en-US') {
+    // Request microphone permissions first to trigger macOS permission dialog
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Microphone permission granted');
+        stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+    } catch (error) {
+        console.warn('Microphone permission not granted:', error);
+    }
+    
     const apiKey = localStorage.getItem('apiKey')?.trim();
     if (apiKey) {
-        const success = await ipcRenderer.invoke('initialize-gemini', apiKey, localStorage.getItem('customPrompt') || '', profile, language);
+        const success = await ipcRenderer.invoke('initialize-openai', apiKey, localStorage.getItem('customPrompt') || '', profile, language);
         if (success) {
             cheddar.setStatus('Live');
         } else {
@@ -167,9 +176,120 @@ ipcRenderer.on('update-status', (event, status) => {
     cheddar.setStatus(status);
 });
 
-// Listen for responses - REMOVED: This is handled in CheatingDaddyApp.js to avoid duplicates
+// Listen for browser audio capture request
+ipcRenderer.on('start-browser-audio', async (event, data) => {
+    console.log('🎤 Starting browser audio capture...');
+    try {
+        // Try multiple approaches to get microphone access
+        console.log('🔐 Requesting microphone permission...');
+        
+        // Method 1: Try simple getUserMedia
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('✅ Method 1 succeeded: Simple getUserMedia');
+        } catch (error1) {
+            console.log('❌ Method 1 failed:', error1.message);
+            
+            // Method 2: Try with specific constraints
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                });
+                console.log('✅ Method 2 succeeded: Specific constraints');
+            } catch (error2) {
+                console.log('❌ Method 2 failed:', error2.message);
+                
+                // Method 3: Try with video permission (sometimes helps)
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: true, 
+                        video: false 
+                    });
+                    console.log('✅ Method 3 succeeded: Audio + video permission');
+                } catch (error3) {
+                    console.log('❌ Method 3 failed:', error3.message);
+                    throw error3; // Re-throw the last error
+                }
+            }
+        }
+        
+        console.log('✅ Microphone access granted for browser audio capture');
+        
+        // Create audio context for processing
+        const audioContext = new AudioContext({ sampleRate: 24000 });
+        const source = audioContext.createMediaStreamSource(stream);
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        
+        let audioChunks = [];
+        let lastSendTime = 0;
+        const SEND_INTERVAL = 1000; // Send audio every 1 second
+        
+        processor.onaudioprocess = async (event) => {
+            const inputBuffer = event.inputBuffer;
+            const inputData = inputBuffer.getChannelData(0);
+            
+            // Convert to Int16
+            const int16Array = new Int16Array(inputData.length);
+            for (let i = 0; i < inputData.length; i++) {
+                int16Array[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+            }
+            
+            // Collect audio chunks
+            audioChunks.push(int16Array);
+            
+            // Send audio data every second
+            const now = Date.now();
+            if (now - lastSendTime >= SEND_INTERVAL && audioChunks.length > 0) {
+                try {
+                    // Combine all chunks
+                    const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+                    const combinedArray = new Int16Array(totalLength);
+                    let offset = 0;
+                    
+                    for (const chunk of audioChunks) {
+                        combinedArray.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                    
+                    // Convert to base64 and send to main process
+                    const base64Data = Buffer.from(combinedArray.buffer).toString('base64');
+                    console.log('📤 Sending audio data to OpenAI...');
+                    await ipcRenderer.invoke('send-audio-to-openai', base64Data);
+                    
+                    // Clear chunks and update time
+                    audioChunks = [];
+                    lastSendTime = now;
+                } catch (error) {
+                    console.error('❌ Error sending audio:', error);
+                }
+            }
+        };
+        
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+        
+        console.log('🎵 Browser audio capture started successfully');
+        
+        // Send success status
+        cheddar.setStatus('🎤 Microphone active - start speaking!');
+        
+    } catch (error) {
+        console.error('❌ Failed to start browser audio capture:', error);
+        console.error('❌ Error details:', error.name, error.message);
+        
+        // Send status update to main process
+        cheddar.setStatus(`❌ Microphone access denied: ${error.message}`);
+    }
+});
+
+// Listen for responses - REMOVED: This is handled in HarmoniaApp.js to avoid duplicates
 // ipcRenderer.on('update-response', (event, response) => {
-//     console.log('Gemini response:', response);
+//     console.log('OpenAI response:', response);
 //     cheddar.e().setResponse(response);
 //     // You can add UI elements to display the response if needed
 // });
@@ -565,7 +685,7 @@ function stopCapture() {
     offscreenContext = null;
 }
 
-// Send text message to Gemini
+// Send text message to OpenAI
 async function sendTextMessage(text) {
     if (!text || text.trim().length === 0) {
         console.warn('Cannot send empty text message');
@@ -695,24 +815,24 @@ function handleShortcut(shortcutKey) {
 }
 
 // Create reference to the main app element
-const cheatingDaddyApp = document.querySelector('cheating-daddy-app');
+    const harmoniaApp = document.querySelector('harmonia-app');
 
 // Consolidated cheddar object - all functions in one place
 const cheddar = {
     // Element access
-    element: () => cheatingDaddyApp,
-    e: () => cheatingDaddyApp,
+    element: () => harmoniaApp,
+    e: () => harmoniaApp,
 
     // App state functions - access properties directly from the app element
-    getCurrentView: () => cheatingDaddyApp.currentView,
-    getLayoutMode: () => cheatingDaddyApp.layoutMode,
+    getCurrentView: () => harmoniaApp.currentView,
+    getLayoutMode: () => harmoniaApp.layoutMode,
 
     // Status and response functions
-    setStatus: text => cheatingDaddyApp.setStatus(text),
-    setResponse: response => cheatingDaddyApp.setResponse(response),
+    setStatus: text => harmoniaApp.setStatus(text),
+    setResponse: response => harmoniaApp.setResponse(response),
 
     // Core functionality
-    initializeGemini,
+    initializeOpenAI,
     startCapture,
     stopCapture,
     sendTextMessage,

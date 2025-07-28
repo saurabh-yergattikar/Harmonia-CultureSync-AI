@@ -438,7 +438,7 @@ export class OnboardingView extends LitElement {
         const slides = [
             {
                 icon: 'assets/onboarding/welcome.svg',
-                title: 'Welcome to Cheating Daddy',
+                title: 'Welcome to harmonia',
                 content:
                     'Your AI assistant that listens and watches, then provides intelligent suggestions automatically during interviews and meetings.',
             },
@@ -462,7 +462,7 @@ export class OnboardingView extends LitElement {
             {
                 icon: 'assets/onboarding/ready.svg',
                 title: 'Ready to Go',
-                content: 'Add your Gemini API key in settings and start getting AI-powered assistance in real-time.',
+                content: 'Add your OpenAI API key in settings and start getting AI-powered assistance in real-time.',
             },
         ];
 

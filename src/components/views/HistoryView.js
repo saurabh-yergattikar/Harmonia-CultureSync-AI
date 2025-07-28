@@ -401,13 +401,12 @@ export class HistoryView extends LitElement {
     }
 
     getProfileNames() {
-        return {
-            interview: 'Job Interview',
+        return {            
             sales: 'Sales Call',
             meeting: 'Business Meeting',
             presentation: 'Presentation',
-            negotiation: 'Negotiation',
-            exam: 'Exam Assistant',
+            negotiation: 'Negotiation'
+            
         };
     }
 

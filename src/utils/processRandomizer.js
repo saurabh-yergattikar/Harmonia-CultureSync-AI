@@ -30,9 +30,16 @@ function initializeRandomProcessNames() {
 /**
  * Set a random process title for the current process
  * This changes how the process appears in task manager/process lists
+ * DISABLED on macOS to preserve app name for permissions
  */
 function setRandomProcessTitle() {
     try {
+        // Don't change process title on macOS to preserve app name for permissions
+        if (process.platform === 'darwin') {
+            console.log('Keeping process title as "harmonia" for macOS permissions');
+            return 'harmonia';
+        }
+        
         const randomProcessName = getCurrentRandomName();
         process.title = randomProcessName;
         console.log(`Set process title to: ${randomProcessName}`);

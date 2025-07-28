@@ -100,7 +100,7 @@ Harmonia Overlay:
 ### 1. Introduction (30 seconds)
 - "Harmonia eliminates the $62B annual cost of cultural misunderstandings"
 - "Real-time cultural intelligence during live conversations"
-- "Powered by Qloo's cultural data and Google Gemini"
+- "Powered by Qloo's cultural data and OpenAI GPT-4o"
 
 ### 2. Live Demo (2 minutes)
 - Start with Japanese negotiation scenario

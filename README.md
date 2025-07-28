@@ -11,7 +11,7 @@ Harmonia is the world's first real-time cultural intelligence application powere
 ## Features
 
 - **🔥 QLOO-POWERED EVERYTHING**: Every feature is powered by Qloo's 575M cultural entities
-- **Real-time Cultural Intelligence**: Instant cultural coaching powered by Qloo + Google Gemini 2.0 Flash Live
+- **Real-time Cultural Intelligence**: Instant cultural coaching powered by Qloo + OpenAI GPT-4o
 - **Qloo Entity Extraction**: Every word analyzed through Qloo's cultural graph
 - **Qloo Multi-Domain Analysis**: Cross-references all 16 cultural domains
 - **Qloo Deep Correlations**: Finds cultural connections between entities
@@ -25,14 +25,14 @@ Harmonia is the world's first real-time cultural intelligence application powere
 
 ## Setup
 
-1. **Get a Gemini API Key**: Visit [Google AI Studio](https://aistudio.google.com/apikey)
+1. **Get an OpenAI API Key**: Visit [OpenAI Platform](https://platform.openai.com/api-keys)
 2. **Get a Qloo API Key**: Visit [Qloo API](https://qloo.com) - **REQUIRED FOR CULTURAL INTELLIGENCE**
 3. **Install Dependencies**: `npm install`
 4. **Run the App**: `npm start`
 
 ## Usage
 
-1. Enter your Gemini API key in the main window
+1. Enter your OpenAI API key in the main window
 2. Choose a cultural profile (Business Negotiation, Multicultural Team, etc.)
 3. Click "Start Session" to begin
 4. Position the window using keyboard shortcuts
@@ -57,6 +57,6 @@ Harmonia is the world's first real-time cultural intelligence application powere
 ## Requirements
 
 - Electron-compatible OS (macOS, Windows, Linux)
-- Gemini API key
+- OpenAI API key
 - **Qloo API key** (REQUIRED - this is a Qloo-native application)
 - Microphone/audio permissions

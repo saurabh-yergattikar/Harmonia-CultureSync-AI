@@ -99,6 +99,23 @@ export class MainView extends LitElement {
             border-color: var(--start-button-border);
         }
 
+        .test-audio-button {
+            background: var(--button-background);
+            color: var(--button-color);
+            border: 1px solid var(--button-border);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .test-audio-button:hover {
+            background: var(--button-hover-background);
+            border-color: var(--button-hover-border);
+        }
+
         .shortcut-icons {
             display: flex;
             align-items: center;
@@ -218,6 +235,115 @@ export class MainView extends LitElement {
         window.location.reload();
     }
 
+    async handleTestAudio() {
+        try {
+            console.log('🎤 Testing audio capture...');
+            console.log('🔍 Checking navigator.mediaDevices:', !!navigator.mediaDevices);
+            console.log('🔍 Checking getUserMedia:', !!navigator.mediaDevices?.getUserMedia);
+            
+            // Check if we have permission first
+            try {
+                const permissions = await navigator.permissions.query({ name: 'microphone' });
+                console.log('🔍 Microphone permission state:', permissions.state);
+            } catch (permError) {
+                console.log('🔍 Could not check permissions:', permError.message);
+            }
+            
+            // Try multiple methods to trigger permission dialog
+            console.log('🔐 Requesting microphone access...');
+            
+            // Method 1: Simple getUserMedia
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('✅ Method 1 succeeded: Simple getUserMedia');
+            } catch (error1) {
+                console.log('❌ Method 1 failed:', error1.message);
+                
+                // Method 2: Try with specific constraints
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        }
+                    });
+                    console.log('✅ Method 2 succeeded: Specific constraints');
+                } catch (error2) {
+                    console.log('❌ Method 2 failed:', error2.message);
+                    
+                    // Method 3: Try with video permission (sometimes helps)
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ 
+                            audio: true, 
+                            video: false 
+                        });
+                        console.log('✅ Method 3 succeeded: Audio + video permission');
+                    } catch (error3) {
+                        console.log('❌ Method 3 failed:', error3.message);
+                        throw error3; // Re-throw the last error
+                    }
+                }
+            }
+            
+            console.log('✅ Microphone access granted for test');
+            
+            // Create a simple audio context to test
+            const audioContext = new AudioContext({ sampleRate: 24000 });
+            const source = audioContext.createMediaStreamSource(stream);
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+            
+            let testChunks = [];
+            let testStartTime = Date.now();
+            
+            processor.onaudioprocess = async (event) => {
+                const inputBuffer = event.inputBuffer;
+                const inputData = inputBuffer.getChannelData(0);
+                
+                // Convert to Int16
+                const int16Array = new Int16Array(inputData.length);
+                for (let i = 0; i < inputData.length; i++) {
+                    int16Array[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                }
+                
+                testChunks.push(int16Array);
+                
+                // Stop after 3 seconds
+                if (Date.now() - testStartTime > 3000) {
+                    source.disconnect();
+                    processor.disconnect();
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    console.log('🎵 Audio test completed - captured', testChunks.length, 'chunks');
+                    alert('🎤 Audio test successful! Microphone is working.');
+                }
+            };
+            
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+            
+            alert('🎤 Starting audio test - speak for 3 seconds...');
+            
+        } catch (error) {
+            console.error('❌ Audio test failed:', error);
+            console.error('❌ Error name:', error.name);
+            console.error('❌ Error message:', error.message);
+            console.error('❌ Error stack:', error.stack);
+            
+            // Check if it's a permission error
+            if (error.name === 'NotAllowedError') {
+                console.error('🔒 This is a permission error - macOS is blocking microphone access');
+                console.error('🔒 Possible causes:');
+                console.error('🔒 1. App not code signed');
+                console.error('🔒 2. Microphone permission not granted in System Preferences');
+                console.error('🔒 3. App not in microphone permissions list');
+            }
+            
+            alert(`❌ Audio test failed: ${error.message}\n\nThis is likely due to macOS security restrictions. Check System Preferences > Security & Privacy > Privacy > Microphone.`);
+        }
+    }
+
     loadLayoutMode() {
         const savedLayoutMode = localStorage.getItem('layoutMode');
         if (savedLayoutMode && savedLayoutMode !== 'normal') {
@@ -288,7 +414,7 @@ export class MainView extends LitElement {
             <div class="input-group">
                 <input
                     type="password"
-                    placeholder="Enter your Gemini API Key"
+                    placeholder="Enter your OpenAI API Key"
                     .value=${localStorage.getItem('apiKey') || ''}
                     @input=${this.handleInput}
                     class="${this.showApiKeyError ? 'api-key-error' : ''}"
@@ -301,6 +427,9 @@ export class MainView extends LitElement {
                 dont have an api key?
                 <span @click=${this.handleAPIKeyHelpClick} class="link">get one here</span>
             </p>
+            <button @click=${this.handleTestAudio} class="test-audio-button">
+                🎤 Test Microphone
+            </button>
         `;
     }
 }

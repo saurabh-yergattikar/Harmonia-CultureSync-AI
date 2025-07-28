@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Microphone Test - harmonia</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .success {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .error {
+            background: #f44336;
+            color: white;
+        }
+        
+        .info {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .log {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Microphone Test</h1>
+        <p>Testing microphone access for harmonia</p>
+        
+        <button id="testBtn" onclick="testMicrophone()">🎤 Test Microphone</button>
+        <button id="resetBtn" onclick="resetTest()">🔄 Reset Test</button>
+        
+        <div id="status" class="status info">
+            Ready to test microphone access...
+        </div>
+        
+        <div id="log" class="log">
+            <div>🔍 Console logs will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        let audioContext;
+        let stream;
+        let testChunks = [];
+        let testStartTime;
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        async function testMicrophone() {
+            const testBtn = document.getElementById('testBtn');
+            testBtn.disabled = true;
+            testChunks = [];
+            
+            try {
+                log('🎤 Starting microphone test...');
+                updateStatus('🔐 Requesting microphone permission...', 'info');
+                
+                // Check if getUserMedia is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia not supported');
+                }
+                
+                log('✅ getUserMedia is available');
+                
+                // Try to get microphone access
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                log('✅ Microphone access granted!');
+                updateStatus('✅ Microphone access granted!', 'success');
+                
+                // Start audio processing
+                log('🎵 Starting audio processing...');
+                audioContext = new AudioContext({ sampleRate: 24000 });
+                const source = audioContext.createMediaStreamSource(stream);
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                testStartTime = Date.now();
+                
+                processor.onaudioprocess = (event) => {
+                    const inputBuffer = event.inputBuffer;
+                    const inputData = inputBuffer.getChannelData(0);
+                    
+                    // Convert to Int16
+                    const int16Array = new Int16Array(inputData.length);
+                    for (let i = 0; i < inputData.length; i++) {
+                        int16Array[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                    }
+                    
+                    testChunks.push(int16Array);
+                    
+                    // Stop after 3 seconds
+                    if (Date.now() - testStartTime > 3000) {
+                        source.disconnect();
+                        processor.disconnect();
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        log(`🎵 Test completed - captured ${testChunks.length} audio chunks`);
+                        updateStatus(`✅ Test successful! Captured ${testChunks.length} audio chunks`, 'success');
+                        testBtn.disabled = false;
+                    }
+                };
+                
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+                
+                log('🎤 Speak for 3 seconds...');
+                updateStatus('🎤 Speak for 3 seconds...', 'info');
+                
+            } catch (error) {
+                log(`❌ Error: ${error.name} - ${error.message}`);
+                updateStatus(`❌ Failed: ${error.message}`, 'error');
+                testBtn.disabled = false;
+                
+                // Provide specific guidance based on error
+                if (error.name === 'NotAllowedError') {
+                    log('🔒 This is a permission error. Try:');
+                    log('   1. Check System Preferences > Security & Privacy > Privacy > Microphone');
+                    log('   2. Look for this browser/app and check the box');
+                    log('   3. Refresh the page and try again');
+                }
+            }
+        }
+        
+        function resetTest() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            
+            testChunks = [];
+            updateStatus('Ready to test microphone access...', 'info');
+            document.getElementById('log').innerHTML = '<div>🔍 Console logs will appear here...</div>';
+            document.getElementById('testBtn').disabled = false;
+        }
+        
+        // Log initial state
+        log('🚀 Microphone test page loaded');
+        log(`🔍 getUserMedia available: ${!!navigator.mediaDevices?.getUserMedia}`);
+        log(`🔍 User agent: ${navigator.userAgent}`);
+    </script>
+</body>
+</html> 

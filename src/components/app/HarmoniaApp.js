@@ -126,7 +126,7 @@ export class HarmoniaApp extends LitElement {
         this.startTime = null;
         this.isRecording = false;
         this.sessionActive = false;
-        this.selectedProfile = localStorage.getItem('selectedProfile') || 'interview';
+        this.selectedProfile = localStorage.getItem('selectedProfile') || 'sales';
         this.selectedLanguage = localStorage.getItem('selectedLanguage') || 'en-US';
         this.selectedScreenshotInterval = localStorage.getItem('selectedScreenshotInterval') || '5';
         this.selectedImageQuality = localStorage.getItem('selectedImageQuality') || 'medium';
@@ -149,6 +149,9 @@ export class HarmoniaApp extends LitElement {
     connectedCallback() {
         super.connectedCallback();
 
+        // Request microphone permissions immediately when app loads
+        this.requestMicrophonePermission();
+
         // Set up IPC listeners if needed
         if (window.require) {
             const { ipcRenderer } = window.require('electron');
@@ -165,6 +168,28 @@ export class HarmoniaApp extends LitElement {
                 this.culturalCoaching = coaching;
                 this.requestUpdate();
             });
+        }
+    }
+
+    async requestMicrophonePermission() {
+        try {
+            console.log('Requesting microphone permission on app startup...');
+            
+            // Use the simple getUserMedia call as suggested by GPT
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('✅ Microphone permission granted on app startup');
+            stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+            
+            // Also try to access system audio sources
+            try {
+                const { desktopCapturer } = require('electron');
+                const sources = await desktopCapturer.getSources({ types: ['audio'] });
+                console.log('System audio sources found:', sources.length);
+            } catch (error) {
+                console.log('System audio source access attempt:', error.message);
+            }
+        } catch (error) {
+            console.warn('❌ Microphone permission not granted on app startup:', error);
         }
     }
 
@@ -285,7 +310,17 @@ export class HarmoniaApp extends LitElement {
             return;
         }
 
-        await cheddar.initializeGemini(this.selectedProfile, this.selectedLanguage);
+        // Force microphone permission request before starting session
+        try {
+            console.log('Requesting microphone permission before starting session...');
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('✅ Microphone permission granted for session start');
+            stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+        } catch (error) {
+            console.warn('❌ Microphone permission not granted for session start:', error);
+        }
+
+        await cheddar.initializeOpenAI(this.selectedProfile, this.selectedLanguage);
         // Pass the screenshot interval as string (including 'manual' option)
         cheddar.startCapture(this.selectedScreenshotInterval, this.selectedImageQuality);
         this.responses = [];
@@ -297,7 +332,7 @@ export class HarmoniaApp extends LitElement {
     async handleAPIKeyHelp() {
         if (window.require) {
             const { ipcRenderer } = window.require('electron');
-            await ipcRenderer.invoke('open-external', 'https://cheatingdaddy.com/help/api-key');
+            await ipcRenderer.invoke('open-external', 'https://harmonia-qloo.com/help/api-key');
         }
     }
 

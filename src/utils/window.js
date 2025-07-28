@@ -25,7 +25,7 @@ function ensureDataDirectories() {
     return { imageDir, audioDir };
 }
 
-function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
+function createWindow(sendToRenderer, openaiSessionRef, randomNames = null) {
     // Get layout preference (default to 'normal')
     let windowWidth = 1100;
     let windowHeight = 600;
@@ -44,8 +44,8 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
             contextIsolation: false, // TODO: change to true
             backgroundThrottling: false,
             enableBlinkFeatures: 'GetDisplayMedia',
-            webSecurity: true,
-            allowRunningInsecureContent: false,
+            webSecurity: false, // Disable web security for microphone access
+            allowRunningInsecureContent: true,
         },
         backgroundColor: '#00000000',
     });
@@ -124,17 +124,17 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
                         mainWindow.setContentProtection(true);
                     }
 
-                    updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessionRef);
+                    updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, openaiSessionRef);
                 })
                 .catch(() => {
                     // Default to content protection enabled
                     mainWindow.setContentProtection(true);
-                    updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessionRef);
+                    updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, openaiSessionRef);
                 });
         }, 150);
     });
 
-    setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef);
+    setupWindowIpcHandlers(mainWindow, sendToRenderer, openaiSessionRef);
 
     return mainWindow;
 }
@@ -156,7 +156,7 @@ function getDefaultKeybinds() {
     };
 }
 
-function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessionRef) {
+function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, openaiSessionRef) {
     console.log('Updating global shortcuts with:', keybinds);
 
     // Unregister all existing shortcuts
@@ -316,7 +316,7 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
     }
 }
 
-function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
+function setupWindowIpcHandlers(mainWindow, sendToRenderer, openaiSessionRef) {
     ipcMain.on('view-changed', (event, view) => {
         if (view !== 'assistant' && !mainWindow.isDestroyed()) {
             mainWindow.setIgnoreMouseEvents(false);
@@ -331,7 +331,7 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
 
     ipcMain.on('update-keybinds', (event, newKeybinds) => {
         if (!mainWindow.isDestroyed()) {
-            updateGlobalShortcuts(newKeybinds, mainWindow, sendToRenderer, geminiSessionRef);
+            updateGlobalShortcuts(newKeybinds, mainWindow, sendToRenderer, openaiSessionRef);
         }
     });
 

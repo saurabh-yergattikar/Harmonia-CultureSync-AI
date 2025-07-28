@@ -29,13 +29,12 @@ function applyStealthMeasures(mainWindow) {
         }
     }
 
-    // Set random app name in menu bar (macOS)
+    // DISABLED: Set random app name in menu bar (macOS) - keeping Harmonia + Qloo for permissions
     if (process.platform === 'darwin') {
         try {
             const { app } = require('electron');
-            const randomName = getCurrentRandomDisplayName();
-            app.setName(randomName);
-            console.log(`Set app name to: ${randomName}`);
+            // Keep the original app name for permissions - don't change it
+                            console.log(`App name preserved as: harmonia for macOS permissions`);
         } catch (error) {
             console.warn('Could not set app name:', error.message);
         }
