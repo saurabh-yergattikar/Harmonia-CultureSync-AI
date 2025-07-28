@@ -1,11 +1,6 @@
 
 # Harmonia
 
-> [!NOTE]  
-> Use latest MacOS and Windows version, older versions have limited support
-
-> [!NOTE]  
-> During testing it wont answer if you ask something, you need to simulate interviewer asking question, which it will answer
 
 🔥 **QLOO-NATIVE CULTURAL INTELLIGENCE SYSTEM**
 
