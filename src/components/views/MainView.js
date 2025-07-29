@@ -99,6 +99,146 @@ export class MainView extends LitElement {
             border-color: var(--start-button-border);
         }
 
+        /* Demo Styles */
+        .demo-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .demo-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #4ecdc4;
+        }
+
+        .demo-description {
+            margin: 0 0 20px 0;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .demo-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .demo-button.secondary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        }
+
+        .demo-button.secondary:hover {
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3);
+        }
+
+        .demo-button.small {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .demo-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .demo-interface {
+            margin-top: 20px;
+        }
+
+        .demo-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .status-indicator.listening {
+            background: #ff6b6b;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-indicator.idle {
+            background: #4ecdc4;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .demo-instructions {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .demo-instructions h4 {
+            margin: 0 0 10px 0;
+            color: #4ecdc4;
+        }
+
+        .demo-instructions p {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        .demo-response {
+            background: rgba(78, 205, 196, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #4ecdc4;
+            margin-top: 20px;
+        }
+
+        .demo-response h4 {
+            margin: 0 0 15px 0;
+            color: #4ecdc4;
+        }
+
+        .response-text {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+
         .test-audio-button {
             background: var(--button-background);
             color: var(--button-color);
@@ -297,7 +437,11 @@ export class MainView extends LitElement {
             let testChunks = [];
             let testStartTime = Date.now();
             
+            let isTestComplete = false;
+            
             processor.onaudioprocess = async (event) => {
+                if (isTestComplete) return;
+                
                 const inputBuffer = event.inputBuffer;
                 const inputData = inputBuffer.getChannelData(0);
                 
@@ -311,9 +455,11 @@ export class MainView extends LitElement {
                 
                 // Stop after 3 seconds
                 if (Date.now() - testStartTime > 3000) {
+                    isTestComplete = true;
                     source.disconnect();
                     processor.disconnect();
                     stream.getTracks().forEach(track => track.stop());
+                    audioContext.close();
                     
                     console.log('🎵 Audio test completed - captured', testChunks.length, 'chunks');
                     alert('🎤 Audio test successful! Microphone is working.');

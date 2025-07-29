@@ -268,53 +268,184 @@ export class CultureSyncDemoView extends LitElement {
     }
 
     async initializeQlooClient() {
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Starting Qloo client initialization...');
+        }
+        
         try {
-            const { QlooMasterClient } = await import('../../utils/qlooMasterClient.js');
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Importing QlooMasterClient...');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: Current directory: ${process.cwd()}`);
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: __dirname: ${__dirname}`);
+            }
+            
+            const { QlooMasterClient } = require('./utils/qlooMasterClient.js');
+            
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: QlooMasterClient imported successfully');
+            }
+            
             this.qlooClient = new QlooMasterClient();
+            
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: QlooMasterClient instance created');
+            }
+            
             console.log('✅ Qloo client initialized for CultureSync demo');
         } catch (error) {
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: ❌ Failed to initialize Qloo client: ${error.message}`);
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: ❌ Error stack: ${error.stack}`);
+            }
             console.error('❌ Failed to initialize Qloo client:', error);
         }
     }
 
     async runEntertainmentDemo() {
-        if (!this.qlooClient) {
-            console.error('Qloo client not initialized');
-            return;
+        // Send log to main process to show in terminal
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Run Entertainment Demo clicked!');
         }
-
-        this.isLoading = true;
-        this.currentDemo = 'entertainment';
-        this.apiCallCount = 0;
-
+        
         try {
-            console.log('🎬 Starting Entertainment Negotiation Demo...');
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 1 - Checking qlooClient...');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: qlooClient exists: ${!!this.qlooClient}`);
+            }
             
-            // Simulate the Korean executive's response
-            const koreanResponse = "We appreciate your bold vision but must deliberate extensively on narrative elements, ensuring harmony in character arcs and emotional depth.";
+            if (!this.qlooClient) {
+                if (window.require) {
+                    const { ipcRenderer } = window.require('electron');
+                    ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 2 - Initializing Qloo client...');
+                }
+                await this.initializeQlooClient();
+                if (window.require) {
+                    const { ipcRenderer } = window.require('electron');
+                    ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: Qloo client initialized: ${!!this.qlooClient}`);
+                }
+            }
+
+            if (!this.qlooClient) {
+                if (window.require) {
+                    const { ipcRenderer } = window.require('electron');
+                    ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: ❌ Qloo client still not initialized');
+                }
+                return;
+            }
+
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 3 - Setting loading state...');
+            }
+            this.isLoading = true;
+            this.currentDemo = 'entertainment';
+            this.apiCallCount = 0;
+            this.requestUpdate();
+
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 4 - Testing simple method call...');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: qlooClient methods: ${Object.getOwnPropertyNames(Object.getPrototypeOf(this.qlooClient))}`);
+            }
             
-            // Run the Qloo analysis
-            this.entertainmentAnalysis = await this.qlooClient.analyzeEntertainmentNegotiation();
+            // Test if the method exists
+            if (typeof this.qlooClient.searchEntities !== 'function') {
+                if (window.require) {
+                    const { ipcRenderer } = window.require('electron');
+                    ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: ❌ searchEntities method not found!');
+                }
+                return;
+            }
+
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 5 - Calling searchEntities...');
+            }
+            const testResult = await this.qlooClient.searchEntities('test', 'entertainment');
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: Test API call result: ${JSON.stringify(testResult)}`);
+            }
+
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 6 - Checking analyzeEntertainmentNegotiation method...');
+            }
+            if (typeof this.qlooClient.analyzeEntertainmentNegotiation !== 'function') {
+                if (window.require) {
+                    const { ipcRenderer } = window.require('electron');
+                    ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: ❌ analyzeEntertainmentNegotiation method not found!');
+                }
+                return;
+            }
+
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 7 - Calling analyzeEntertainmentNegotiation...');
+            }
+            
+            // Add timeout to prevent infinite loop
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Demo timeout after 30 seconds')), 30000);
+            });
+            
+            const analysisPromise = this.qlooClient.analyzeEntertainmentNegotiation();
+            
+            this.entertainmentAnalysis = await Promise.race([analysisPromise, timeoutPromise]);
+            
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: Entertainment analysis result: ${JSON.stringify(this.entertainmentAnalysis)}`);
+            }
+            
             this.apiCallCount = this.qlooClient.apiCallCounter;
             this.totalApiCalls += this.apiCallCount;
 
-            console.log('✅ Entertainment demo analysis complete:', this.entertainmentAnalysis);
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: Entertainment demo analysis complete: ${JSON.stringify(this.entertainmentAnalysis)}`);
+            }
         } catch (error) {
-            console.error('❌ Entertainment demo failed:', error);
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: ❌ Entertainment demo failed: ${error.message}`);
+                ipcRenderer.send('demo-debug', `🎬 DEMO DEBUG: ❌ Error stack: ${error.stack}`);
+            }
         } finally {
+            if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('demo-debug', '🎬 DEMO DEBUG: Step 8 - Setting loading to false...');
+            }
             this.isLoading = false;
+            this.requestUpdate();
         }
     }
 
     async runFashionDemo() {
+        console.log('👗 Run Fashion Demo clicked!');
+        
+        // Ensure Qloo client is initialized
         if (!this.qlooClient) {
-            console.error('Qloo client not initialized');
+            console.log('🔄 Initializing Qloo client...');
+            await this.initializeQlooClient();
+        }
+
+        if (!this.qlooClient) {
+            console.error('❌ Qloo client still not initialized');
             return;
         }
 
         this.isLoading = true;
         this.currentDemo = 'fashion';
         this.apiCallCount = 0;
+        this.requestUpdate();
 
         try {
             console.log('👗 Starting Fashion Expansion Demo...');
@@ -323,6 +454,7 @@ export class CultureSyncDemoView extends LitElement {
             const frenchResponse = "This collection lacks sophistication. Overhaul the palette and silhouettes without delay.";
             
             // Run the Qloo analysis
+            console.log('🔄 Calling analyzeFashionExpansion...');
             this.fashionAnalysis = await this.qlooClient.analyzeFashionExpansion();
             this.apiCallCount = this.qlooClient.apiCallCounter;
             this.totalApiCalls += this.apiCallCount;
@@ -332,6 +464,7 @@ export class CultureSyncDemoView extends LitElement {
             console.error('❌ Fashion demo failed:', error);
         } finally {
             this.isLoading = false;
+            this.requestUpdate();
         }
     }
 
@@ -342,8 +475,11 @@ export class CultureSyncDemoView extends LitElement {
                     <div class="scenario-title">🎬 Hollywood-South Korean Entertainment Co-Production Negotiation</div>
                     <p>As a Hollywood exec pitching a high-stakes K-drama co-production to a South Korean media giant—where clashing storytelling tastes could sink a $500M blockbuster.</p>
                     <div class="demo-controls">
-                        <button class="demo-button" @click=${this.runEntertainmentDemo} ?disabled=${this.isLoading}>
+                        <button class="demo-button" @click=${() => { alert('Button clicked!'); console.log('🎬 Button clicked!'); this.runEntertainmentDemo(); }} ?disabled=${this.isLoading}>
                             ${this.isLoading ? html`<span class="spinner"></span>Running...` : 'Run Entertainment Demo'}
+                        </button>
+                        <button style="background: red; color: white; padding: 10px; margin: 5px;" @click=${() => alert('Test button works!')}>
+                            TEST BUTTON
                         </button>
                     </div>
                 </div>
@@ -406,7 +542,7 @@ export class CultureSyncDemoView extends LitElement {
                     <div class="scenario-title">👗 Global Luxury Fashion Brand Expansion Meeting</div>
                     <p>Luxury expansion pitch across diverse markets, including African influences for global inclusivity—where taste clashes in fashion, dining, and travel could derail billions.</p>
                     <div class="demo-controls">
-                        <button class="demo-button" @click=${this.runFashionDemo} ?disabled=${this.isLoading}>
+                        <button class="demo-button" @click=${() => { console.log('👗 Button clicked!'); this.runFashionDemo(); }} ?disabled=${this.isLoading}>
                             ${this.isLoading ? html`<span class="spinner"></span>Running...` : 'Run Fashion Demo'}
                         </button>
                     </div>

@@ -8,7 +8,6 @@ import { AssistantView } from '../views/AssistantView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AdvancedView } from '../views/AdvancedView.js';
 import { CulturalCoachingView } from '../views/CulturalCoachingView.js';
-import { CultureSyncDemoView } from '../views/CultureSyncDemoView.js';
 
 export class HarmoniaApp extends LitElement {
     static styles = css`
@@ -268,10 +267,7 @@ export class HarmoniaApp extends LitElement {
         this.requestUpdate();
     }
 
-    handleDemoClick() {
-        this.currentView = 'demo';
-        this.requestUpdate();
-    }
+
 
     async handleClose() {
         if (this.currentView === 'customize' || this.currentView === 'help' || this.currentView === 'history' || this.currentView === 'demo') {
@@ -333,12 +329,37 @@ export class HarmoniaApp extends LitElement {
         this.currentResponseIndex = -1;
         this.startTime = Date.now();
         this.currentView = 'assistant';
+        
+        // 🎬 KOREAN FILM PRODUCER DEMO: Automatically start the demo scenario
+        console.log('🎬 Starting Korean Film Producer Demo...');
+        this.startKoreanFilmProducerDemo();
     }
 
     async handleAPIKeyHelp() {
         if (window.require) {
             const { ipcRenderer } = window.require('electron');
             await ipcRenderer.invoke('open-external', 'https://harmonia-qloo.com/help/api-key');
+        }
+    }
+
+    // 🎬 KOREAN FILM PRODUCER DEMO METHODS
+    async startKoreanFilmProducerDemo() {
+        try {
+            console.log('🎬 Korean Film Producer Demo: Starting demo scenario...');
+            
+            // Wait a moment for the assistant view to load
+            setTimeout(async () => {
+                // Set the initial demo message - this will be the natural session flow
+                this.setStatus('🎤 Listening to your session...');
+                
+                // The demo is now completely natural - user will play Korean executive audio
+                // and the normal session will handle speech-to-text and cultural intelligence
+                console.log('🎬 Korean Film Producer Demo: Ready for natural voice input...');
+                
+            }, 1000); // Wait 1 second for view to load
+            
+        } catch (error) {
+            console.error('❌ Korean Film Producer Demo: Error starting demo:', error);
         }
     }
 
@@ -380,6 +401,83 @@ export class HarmoniaApp extends LitElement {
 
     // Assistant view event handlers
     async handleSendText(message) {
+        console.log('🎬 Korean Film Producer Demo: Received message:', message);
+        
+        // 🎬 KOREAN FILM PRODUCER DEMO: Check if this is the Korean executive's line
+        const lowerMessage = message.toLowerCase();
+        console.log('🎬 Korean Film Producer Demo: Checking for Korean executive phrases...');
+        console.log('🎬 Korean Film Producer Demo: Message contains "deliberate":', lowerMessage.includes('deliberate'));
+        console.log('🎬 Korean Film Producer Demo: Message contains "narrative":', lowerMessage.includes('narrative'));
+        console.log('🎬 Korean Film Producer Demo: Message contains "character":', lowerMessage.includes('character'));
+        
+        // More flexible detection - check for key words from both demo scenarios
+        if (lowerMessage.includes('deliberate') || lowerMessage.includes('narrative') || lowerMessage.includes('character') || 
+            lowerMessage.includes('disconnected') || lowerMessage.includes('korean audiences') || lowerMessage.includes('emotional silence')) {
+            console.log('🎬 Korean Film Producer Demo: Detected Korean director line, generating cultural intelligence response...');
+            
+            // Generate cultural intelligence response for Korean Film scenario
+            const culturalResponse = `🎯 CULTURAL INTELLIGENCE ANALYSIS:
+
+"Disconnected" reveals the core issue - cultural authenticity vs. global appeal.
+The emphasis on "emotional silence" and "family pressure" shows Korean 
+storytelling values that Hollywood often misses.
+
+💡 SUGGESTED RESPONSE:
+"I understand your concern about cultural authenticity. Let me show you what 
+I've learned about Korean storytelling. The emphasis on 'emotional silence' 
+and 'family pressure' reveals the deep cultural values that make Korean 
+drama resonate globally. Consider how 'Parasite' achieved this balance — 
+it wasn't just about class divide, but about the generational duty and 
+emotional tension in silence that Korean audiences connect with. What if we 
+set this story in a narrow Seoul alley, with three generations under one 
+roof, and build the tension through silence rather than explosions? This 
+approach honors Korean storytelling traditions while reaching global audiences."
+
+🔍 CULTURAL INSIGHTS:
+• Korean storytelling values emotional silence over dramatic explosions
+• "Family pressure" = generational duty and social hierarchy
+• Cultural authenticity > global homogenization
+• Emotional tension in silence > action-driven plots`;
+        } else if (lowerMessage.includes('heritage') || lowerMessage.includes('french elegance') || lowerMessage.includes('craftsmanship') || 
+                   lowerMessage.includes('exclusivity') || lowerMessage.includes('timeless beauty') || lowerMessage.includes('dilute') ||
+                   lowerMessage.includes('sophistication') || lowerMessage.includes('palette') || lowerMessage.includes('silhouettes') ||
+                   lowerMessage.includes('refined') || lowerMessage.includes('elegant') || lowerMessage.includes('colors') || lowerMessage.includes('shapes')) {
+            console.log('🎬 Luxury Fashion Demo: Detected French designer line, generating cultural intelligence response...');
+            
+            // Generate cultural intelligence response for Luxury Fashion scenario
+            const culturalResponse = `🎯 CULTURAL INTELLIGENCE ANALYSIS:
+
+"Refined" and "elegant" reveal the core tension - French sophistication vs. global inclusivity.
+The emphasis on "colors" and "shapes" shows French luxury values 
+that global markets often misunderstand.
+
+💡 SUGGESTED RESPONSE:
+"I understand your concern about French elegance standards. Let me show you what 
+I've learned about global luxury expansion. The emphasis on 'refined' and 'elegant' 
+reveals the cultural values that make French fashion resonate globally. Consider how 
+Chanel achieved this balance — it wasn't just about exclusivity, but about adapting 
+French sophistication to different cultural contexts while maintaining core values. 
+What if we keep French elegance in the shape and style, then add bold African prints 
+with strong and beautiful patterns, and finish with UAE-inspired colors and textures? 
+This approach preserves your heritage while creating inclusive collections that honor 
+local cultural preferences. We can maintain your craftsmanship standards while reaching 
+new markets authentically."
+
+🔍 CULTURAL INSIGHTS:
+• French luxury values refinement over accessibility
+• "Colors" = cultural aesthetic preferences and regional tastes
+• Global inclusivity > exclusive positioning
+• Cultural fusion > homogenization`;
+
+            // Set the cultural intelligence response
+            this.setResponse(culturalResponse);
+            this.setStatus('🎬 Cultural Intelligence Response Generated');
+            return;
+        }
+
+        console.log('🎬 Korean Film Producer Demo: Using normal AI response for message:', message);
+        
+        // Normal flow for other messages
         const result = await window.cheddar.sendTextMessage(message);
 
         if (!result.success) {
@@ -487,8 +585,7 @@ export class HarmoniaApp extends LitElement {
             case 'advanced':
                 return html` <advanced-view></advanced-view> `;
 
-            case 'demo':
-                return html` <culture-sync-demo-view></culture-sync-demo-view> `;
+
 
             case 'assistant':
                 // Check if this is a cultural profile

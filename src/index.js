@@ -60,87 +60,13 @@ app.whenReady().then(async () => {
     app.setName('harmonia');
     console.log('App name set to: harmonia');
     
-    // Show microphone permission request window
-    setTimeout(() => {
-        const permissionWindow = new BrowserWindow({
-            width: 400,
-            height: 300,
-            webPreferences: {
-                nodeIntegration: false,
-                contextIsolation: true
-            },
-            title: 'harmonia - Microphone Permission',
-            resizable: false,
-            minimizable: false,
-            maximizable: false,
-            alwaysOnTop: true,
-            modal: true,
-            parent: mainWindow
-        });
-        
-        permissionWindow.loadFile('src/permission-request.html');
-        
-        // Close permission window after 5 seconds if not already closed
-        setTimeout(() => {
-            if (!permissionWindow.isDestroyed()) {
-                permissionWindow.close();
-            }
-        }, 5000);
-        
-        console.log('Opened microphone permission request window');
-    }, 2000);
+    // Microphone permission popup removed as requested
     
     // Also set the process title for Activity Monitor
     process.title = 'harmonia';
     console.log('Process title set to: harmonia');
     
-    // Force microphone permission request immediately after app startup
-    setTimeout(async () => {
-        try {
-            console.log('Forcing microphone permission request...');
-            
-            // Set up permission handler
-            const { session } = require('electron');
-            session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-                console.log('Permission requested:', permission);
-                if (permission === 'microphone') {
-                    console.log('Granting microphone permission');
-                    callback(true);
-                } else {
-                    callback(false);
-                }
-            });
-            
-            // Force getUserMedia call to trigger macOS permission dialog
-            if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.executeJavaScript(`
-                    console.log('Triggering microphone permission request...');
-                    navigator.mediaDevices.getUserMedia({ audio: true })
-                        .then(stream => {
-                            console.log('✅ Microphone access granted successfully');
-                            stream.getTracks().forEach(track => track.stop());
-                        })
-                        .catch(error => {
-                            console.log('❌ Microphone access denied:', error.message);
-                        });
-                `);
-            }
-            
-            // Also try desktopCapturer to trigger permission
-            try {
-                const { desktopCapturer } = require('electron');
-                const sources = await desktopCapturer.getSources({ 
-                    types: ['audio'],
-                    thumbnailSize: { width: 0, height: 0 }
-                });
-                console.log('Audio sources found at startup:', sources.length);
-            } catch (error) {
-                console.log('DesktopCapturer error:', error.message);
-            }
-        } catch (error) {
-            console.log('Error requesting microphone permission:', error.message);
-        }
-    }, 1000);
+    // Forced microphone permission request removed as requested
 });
 
 app.on('window-all-closed', () => {
@@ -161,6 +87,11 @@ app.on('activate', () => {
 });
 
 function setupGeneralIpcHandlers() {
+    // Handle demo debug messages
+    ipcMain.on('demo-debug', (event, message) => {
+        console.log(message);
+    });
+
     ipcMain.handle('quit-application', async event => {
         try {
             stopMacOSAudioCapture();
